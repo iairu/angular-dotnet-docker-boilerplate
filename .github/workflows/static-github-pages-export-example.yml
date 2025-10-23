@@ -1,0 +1,37 @@
+name: Build, Run and Export Live Deployment as a Static Site to GitHub Pages using a separate branch
+
+on:
+  push:
+    branches:
+      - main-disabled
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Docker for Docker Compose
+        uses: docker/setup-buildx-action@v2
+
+      - name: Run Docker Compose, keep it running in background
+        run: |
+          set -x
+          docker-compose up --build --no-cache -d
+
+      - name: On live Docker Compose run site traversal for static site generation, save results for Github Pages deployment
+        run: |
+          set -x
+          mkdir -p gh-pages/api
+          wget -O gh-pages/index.html http://localhost
+          wget -O gh-pages/api/health.json http://localhost/api/health.json
+
+      - name: Deploy results to gh-pages branch and the branch to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./gh-pages
+          destination_dir: .
+          cname: react-springboot-docker-static.example.com

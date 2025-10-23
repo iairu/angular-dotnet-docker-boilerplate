@@ -1,0 +1,65 @@
+name: angular-dotnet-docker-demo
+services:
+  nginx:
+    build: ./nginx-reverse-proxy
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
+    # Environment variables (uncomment to use .env file)
+    # env_file:
+    #   - .env.local
+
+  backend:
+    build: ./backend-java-springboot
+    # ports:
+    #   - "8080:8080"
+    depends_on:
+      - postgres
+    # Environment variables (uncomment to use .env file)
+    # env_file:
+    #   - .env.local
+    environment:
+      - SPRING_PROFILES_ACTIVE=development
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/boilerplate_db
+      - SPRING_DATASOURCE_USERNAME=boilerplate_user
+      - SPRING_DATASOURCE_PASSWORD=boilerplate_pass
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+    #   - JWT_SECRET=${JWT_SECRET:-default-secret-key}
+    #   - LOG_LEVEL=${LOG_LEVEL:-INFO}
+
+  frontend:
+    build: ./frontend-react
+    # ports:
+    #   - "3000:3000"
+    depends_on:
+      - backend
+    # Environment variables (uncomment to use .env file)
+    # env_file:
+    #   - .env.local
+    # environment:
+    #   - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost/api}
+    #   - REACT_APP_ENV=${REACT_APP_ENV:-development}
+    #   - NODE_ENV=production
+
+  postgres:
+    image: postgres:18.0-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: boilerplate_db
+      POSTGRES_USER: boilerplate_user
+      POSTGRES_PASSWORD: boilerplate_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Note: PostgreSQL is only accessible by backend container (no exposed ports)
+    # This provides internal network access only for security
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge
