@@ -6,7 +6,7 @@ A tested working boilerplate template for modern full-stack web applications wit
 
 ## 📌 Service Versions
 
-- **Angular**: 18.x
+- **Angular**: 20.x
 - **Node.js**: 22.x (Alpine LTS)
 - **C# .NET**: 8.0
 - **ASP.NET Core**: 8.0
