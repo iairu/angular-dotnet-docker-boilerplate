@@ -12,7 +12,7 @@ services:
     #   - .env.local
 
   backend:
-    build: ./backend-java-springboot
+    build: ./backend-csharp-dotnet
     # ports:
     #   - "8080:8080"
     depends_on:
@@ -21,27 +21,25 @@ services:
     # env_file:
     #   - .env.local
     environment:
-      - SPRING_PROFILES_ACTIVE=development
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/boilerplate_db
-      - SPRING_DATASOURCE_USERNAME=boilerplate_user
-      - SPRING_DATASOURCE_PASSWORD=boilerplate_pass
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=boilerplate_db;Username=boilerplate_user;Password=boilerplate_pass
+      - Logging__LogLevel__Default=Information
     #   - JWT_SECRET=${JWT_SECRET:-default-secret-key}
-    #   - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    #   - LOG_LEVEL=${LOG_LEVEL:-Information}
 
   frontend:
-    build: ./frontend-react
+    build: ./frontend-angular
     # ports:
-    #   - "3000:3000"
+    #   - "4200:80"
     depends_on:
       - backend
     # Environment variables (uncomment to use .env file)
     # env_file:
     #   - .env.local
     # environment:
-    #   - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost/api}
-    #   - REACT_APP_ENV=${REACT_APP_ENV:-development}
+    #   - NG_APP_API_URL=${NG_APP_API_URL:-http://localhost/api}
+    #   - NG_APP_ENV=${NG_APP_ENV:-development}
     #   - NODE_ENV=production
 
   postgres:
