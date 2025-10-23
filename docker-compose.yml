@@ -1,41 +1,48 @@
-name: angular-dotnet-docker-demo4
+name: angular-dotnet-docker-boilerplate
 services:
-  # nginx:
-  #   build: ./nginx-reverse-proxy
-  #   ports:
-  #     - "80:80"
-  #   depends_on:
-  #     - backend
-  #     - frontend
-  #   # Environment variables (uncomment to use .env file)
-  #   # env_file:
-  #   #   - .env.local
-  #   networks:
-  #     - nginx-network
+  nginx:
+    build: ./nginx-reverse-proxy
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    # Environment variables (uncomment to use .env file)
+    # env_file:
+    #   - .env.local
+    networks:
+      - nginx-network
 
-  # backend:
-  #   build: ./backend-csharp-dotnet
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   # Environment variables (uncomment to use .env file)
-  #   # env_file:
-  #   #   - .env.local
-  #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development
-  #     - ASPNETCORE_URLS=http://+:8080
-  #     - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=boilerplate_db;Username=boilerplate_user;Password=boilerplate_pass;SslMode=Disable
-  #     - Logging__LogLevel__Default=Information
-  #   networks:
-  #     - db-network
-  #     - nginx-network
+  backend:
+    build: ./backend-csharp-dotnet
+    # ports:
+    #   - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Environment variables (uncomment to use .env file)
+    # env_file:
+    #   - .env.local
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=boilerplate_db;Username=boilerplate_user;Password=boilerplate_pass;SslMode=Disable
+      - Logging__LogLevel__Default=Information
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health/basic"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks:
+      - db-network
+      - nginx-network
 
   frontend:
     build: ./frontend-angular
-    ports:
-      - "4200:80"
+    # ports:
+    #   - "4200:80"
     # depends_on:
     #   - backend
     # Environment variables (uncomment to use .env file)
@@ -48,28 +55,28 @@ services:
     networks:
       - nginx-network
 
-  # postgres:
-  #   image: postgres:18.0-alpine
-  #   restart: unless-stopped
-  #   environment:
-  #     POSTGRES_DB: boilerplate_db
-  #     POSTGRES_USER: boilerplate_user
-  #     POSTGRES_PASSWORD: boilerplate_pass
-  #   volumes:
-  #     - boilerplate-postgres-data4:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U boilerplate_user -d boilerplate_db"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #   # Note: PostgreSQL is only accessible by backend container (no exposed ports)
-  #   # This provides internal network access only for security
-  #   networks:
-  #     - db-network
+  postgres:
+    image: postgres:18.0-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: boilerplate_db
+      POSTGRES_USER: boilerplate_user
+      POSTGRES_PASSWORD: boilerplate_pass
+    volumes:
+      - boilerplate-postgres-data-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U boilerplate_user -d boilerplate_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    # Note: PostgreSQL is only accessible by backend container (no exposed ports)
+    # This provides internal network access only for security
+    networks:
+      - db-network
 
-# volumes:
-#   boilerplate-postgres-data4:
-#     driver: local
+volumes:
+  boilerplate-postgres-data-volume:
+    driver: local
 
 networks:
   db-network:
