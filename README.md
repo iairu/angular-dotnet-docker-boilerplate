@@ -40,6 +40,16 @@ cd angular-dotnet-docker-boilerplate
 
 ### 2. Launch with Docker
 
+**Option A: Using Quick Start Script (Recommended)**
+```bash
+# Make the script executable
+chmod +x quick-start.sh
+
+# Run it
+./quick-start.sh
+```
+
+**Option B: Manual Docker Commands**
 ```bash
 # Start all services
 docker compose up
@@ -47,6 +57,16 @@ docker compose up
 # Or rebuild and start (useful after code changes)
 docker compose build --no-cache
 docker compose up
+```
+
+**Option C: Fresh Database Start (If you encounter database issues)**
+```bash
+# Stop containers and remove old database
+docker compose down
+docker volume rm angular-dotnet-docker-demo_postgres-data
+
+# Start fresh
+docker compose up --build
 ```
 
 ### 3. Access Your Application
@@ -299,6 +319,7 @@ The boilerplate works perfectly without any environment configuration!
 - **Health Checks**: Database connectivity monitoring
 - **Security**: Database only accessible within Docker network
 - **Persistence**: Data persisted in Docker volumes
+- **Auto-Recovery**: Automatic detection and repair of corrupted migration state
 
 ### Available API Endpoints
 
@@ -308,9 +329,68 @@ The boilerplate works perfectly without any environment configuration!
 - `GET /api/users/count` - Get user count
 - `GET /api/health` - Database health check
 
+### 🔧 Migration Verification System
+
+The application includes an intelligent migration verification system that prevents the common "relation does not exist" error:
+
+**How it works:**
+1. On startup, verifies that all expected database tables actually exist
+2. If tables are missing (corrupted migration state), automatically:
+   - Drops the migration history table
+   - Reapplies all migrations from scratch
+   - Verifies tables were created successfully
+3. Provides clear logging of the entire process
+
+**Expected startup logs (healthy database):**
+```
+🔍 Verifying database schema and migrations...
+✅ Table 'users' exists
+✅ All expected tables exist in database
+✅ Database migrations verified and up to date
+```
+
+**Recovery logs (corrupted database):**
+```
+🔍 Verifying database schema and migrations...
+⚠️ Table 'users' does not exist in database
+❌ Database schema is incomplete. Missing tables: users
+🔄 Resetting migration history and reapplying all migrations...
+✅ All migrations reapplied successfully
+✅ Verified: Table 'users' now exists
+```
+
+**Testing the auto-recovery feature:**
+```bash
+# Run the test script
+chmod +x test-migration-fix.sh
+./test-migration-fix.sh
+```
+
+For more details, see [MIGRATION_FIX_README.md](MIGRATION_FIX_README.md)
+
 ## 🐛 Troubleshooting
 
 ### Common Issues
+
+**"Relation 'users' does not exist" Error:**
+
+✅ **FIXED AUTOMATICALLY** - The application now auto-detects and repairs this issue!
+
+If you still see this error:
+```bash
+# Option 1: Let the app auto-recover (recommended)
+docker compose restart backend
+# Watch the logs - you'll see the recovery process
+docker compose logs -f backend
+
+# Option 2: Fresh database start
+docker compose down
+docker volume rm angular-dotnet-docker-demo_postgres-data
+docker compose up --build
+
+# Option 3: Use the quick start script
+./quick-start.sh
+```
 
 **Port conflicts:**
 ```bash
@@ -334,14 +414,25 @@ docker compose logs postgres
 # Check backend connection logs
 docker compose logs backend
 # Verify database health
-curl http://localhost/api/health
+curl http://localhost:8080/health
 ```
 
 **API calls fail:**
 - Check Nginx configuration in `nginx-reverse-proxy/nginx.conf`
 - Verify backend is running: `docker compose logs backend`
 - Ensure CORS is configured in ASP.NET Core
-- Test database connectivity: `curl http://localhost/api/health`
+- Test database connectivity: `curl http://localhost:8080/health`
+
+**Migration issues persist:**
+```bash
+# View detailed migration logs
+docker compose logs backend | grep -A 10 "Verifying database schema"
+
+# Manually inspect database
+docker compose exec postgres psql -U boilerplate_user -d boilerplate_db
+\dt  # List all tables
+\d users  # Show users table structure
+```
 
 ## 🤝 Contributing
 

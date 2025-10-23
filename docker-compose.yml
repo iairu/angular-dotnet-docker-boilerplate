@@ -1,46 +1,52 @@
-name: angular-dotnet-docker-demo
+name: angular-dotnet-docker-demo3
 services:
-  nginx:
-    build: ./nginx-reverse-proxy
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-      - frontend
-    # Environment variables (uncomment to use .env file)
-    # env_file:
-    #   - .env.local
+  # nginx:
+  #   build: ./nginx-reverse-proxy
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     - backend
+  #     - frontend
+  #   # Environment variables (uncomment to use .env file)
+  #   # env_file:
+  #   #   - .env.local
+  #   networks:
+  #     - nginx-network
 
   backend:
     build: ./backend-csharp-dotnet
-    # ports:
-    #   - "8080:8080"
+    ports:
+      - "8080:8080"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     # Environment variables (uncomment to use .env file)
     # env_file:
     #   - .env.local
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=boilerplate_db;Username=boilerplate_user;Password=boilerplate_pass
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=boilerplate_db;Username=boilerplate_user;Password=boilerplate_pass;SslMode=Disable
       - Logging__LogLevel__Default=Information
-    #   - JWT_SECRET=${JWT_SECRET:-default-secret-key}
-    #   - LOG_LEVEL=${LOG_LEVEL:-Information}
+    networks:
+      - db-network
+      - nginx-network
 
-  frontend:
-    build: ./frontend-angular
-    # ports:
-    #   - "4200:80"
-    depends_on:
-      - backend
-    # Environment variables (uncomment to use .env file)
-    # env_file:
-    #   - .env.local
-    # environment:
-    #   - NG_APP_API_URL=${NG_APP_API_URL:-http://localhost/api}
-    #   - NG_APP_ENV=${NG_APP_ENV:-development}
-    #   - NODE_ENV=production
+  # frontend:
+  #   build: ./frontend-angular
+  #   # ports:
+  #   #   - "4200:80"
+  #   depends_on:
+  #     - backend
+  #   # Environment variables (uncomment to use .env file)
+  #   # env_file:
+  #   #   - .env.local
+  #   # environment:
+  #   #   - NG_APP_API_URL=${NG_APP_API_URL:-http://localhost/api}
+  #   #   - NG_APP_ENV=${NG_APP_ENV:-development}
+  #   #   - NODE_ENV=production
+  #   networks:
+  #     - nginx-network
 
   postgres:
     image: postgres:18.0-alpine
@@ -50,14 +56,21 @@ services:
       POSTGRES_USER: boilerplate_user
       POSTGRES_PASSWORD: boilerplate_pass
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - boilerplate-postgres-data3:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U boilerplate_user -d boilerplate_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     # Note: PostgreSQL is only accessible by backend container (no exposed ports)
     # This provides internal network access only for security
+    networks:
+      - db-network
 
 volumes:
-  postgres_data:
+  boilerplate-postgres-data3:
     driver: local
 
 networks:
-  default:
-    driver: bridge
+  db-network:
+  nginx-network:

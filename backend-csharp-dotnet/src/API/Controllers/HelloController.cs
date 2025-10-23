@@ -23,10 +23,16 @@ public class HelloController : ControllerBase
     }
 
     [HttpGet("hello")]
-    public async Task<ActionResult<string>> Hello()
+    public ActionResult<string> Hello()
     {
         _logger.LogInformation("Hello endpoint called");
         return Ok("Hello, World!");
+    }
+
+    [HttpGet("ping")]
+    public ActionResult<string> Ping()
+    {
+        return Ok("pong");
     }
 
     [HttpGet("hello.json")]
@@ -45,23 +51,42 @@ public class HelloController : ControllerBase
     {
         _logger.LogInformation("Health endpoint called");
         
-        var isHealthy = await _databaseHealthService.IsHealthyAsync();
-        string? databaseInfo = null;
-        
-        if (isHealthy)
+        try
         {
-            try
+            var isHealthy = await _databaseHealthService.IsHealthyAsync();
+            string? databaseInfo = null;
+            
+            if (isHealthy)
             {
-                databaseInfo = await _databaseHealthService.GetDatabaseInfoAsync();
+                try
+                {
+                    databaseInfo = await _databaseHealthService.GetDatabaseInfoAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to get database info");
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to get database info");
-            }
+            
+            var response = new HealthResponse(isHealthy, databaseInfo);
+            return Ok(response);
         }
-        
-        var response = new HealthResponse(isHealthy, databaseInfo);
-        return Ok(response);
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Health check failed");
+            var response = new HealthResponse(false, $"Health check error: {ex.Message}");
+            return Ok(response);
+        }
+    }
+
+    [HttpGet("health/basic")]
+    public ActionResult<object> BasicHealth()
+    {
+        return Ok(new { 
+            status = "UP", 
+            timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            service = "Angular .NET Docker Boilerplate API"
+        });
     }
 
     [HttpGet("health.json")]

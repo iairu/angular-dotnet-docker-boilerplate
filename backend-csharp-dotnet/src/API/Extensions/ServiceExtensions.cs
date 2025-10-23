@@ -3,6 +3,7 @@ using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace API.Extensions;
 
@@ -23,10 +24,10 @@ public static class ServiceExtensions
 
         // Services
         services.AddScoped<IDatabaseHealthService, DatabaseHealthService>();
-
+        
         // Health checks
         services.AddHealthChecks()
-            .AddDbContextCheck<AppDbContext>("database");
+            .AddCheck<DatabaseHealthCheck>("database");
 
         return services;
     }
@@ -46,13 +47,6 @@ public static class ServiceExtensions
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
-            });
-
-            options.AddPolicy("AllowAll", policy =>
-            {
-                policy.AllowAnyOrigin()
-                      .AllowAnyMethod()
-                      .AllowAnyHeader();
             });
         });
 
@@ -76,10 +70,35 @@ public static class ServiceExtensions
                     Url = new Uri("https://iairu.com")
                 }
             });
-
-            c.EnableAnnotations();
         });
 
         return services;
+    }
+}
+
+public class DatabaseHealthCheck : IHealthCheck
+{
+    private readonly IDatabaseHealthService _databaseHealthService;
+
+    public DatabaseHealthCheck(IDatabaseHealthService databaseHealthService)
+    {
+        _databaseHealthService = databaseHealthService;
+    }
+
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var isHealthy = await _databaseHealthService.IsHealthyAsync();
+            if (isHealthy)
+            {
+                return HealthCheckResult.Healthy("Database connection is healthy");
+            }
+            return HealthCheckResult.Unhealthy("Database connection failed");
+        }
+        catch (Exception ex)
+        {
+            return HealthCheckResult.Unhealthy($"Database health check failed: {ex.Message}", ex);
+        }
     }
 }

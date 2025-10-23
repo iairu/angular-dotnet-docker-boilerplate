@@ -1,45 +1,54 @@
-# Use the official .NET 8.0 SDK image for building
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 
-# Set the working directory
 WORKDIR /app
 
-# Copy solution file and project files
+# Copy project files
 COPY AngularDotnetBoilerplate.sln ./
-COPY src/API/API.csproj ./src/API/
 COPY src/Core/Core.csproj ./src/Core/
 COPY src/Infrastructure/Infrastructure.csproj ./src/Infrastructure/
+COPY src/API/API.csproj ./src/API/
 
-# Restore dependencies
-RUN dotnet restore
+# Restore packages
+RUN dotnet restore --disable-parallel --no-cache
 
-# Copy the rest of the source code
+# Copy source code
 COPY src/ ./src/
 
-# Build the application
+# Build application
 RUN dotnet build -c Release --no-restore
 
-# Publish the application
-RUN dotnet publish src/API/API.csproj -c Release -o /app/publish --no-restore
+# Publish application
+RUN dotnet publish src/API/API.csproj -c Release -o /app/publish --no-build
 
-# Use the official .NET 8.0 ASP.NET runtime image for running
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine
 
-# Set the working directory
+# Install timezone data and curl for health checks
+RUN apk add --no-cache tzdata curl
+
 WORKDIR /app
 
-# Copy the published application from the build stage
+# Create logs directory
+RUN mkdir -p logs
+
+# Copy published application
 COPY --from=build /app/publish .
 
-# Create logs directory
-RUN mkdir -p /app/logs
+# Create non-root user
+RUN adduser -D -s /bin/sh appuser && chown -R appuser:appuser /app
+USER appuser
 
-# Expose the port the app runs on
-EXPOSE 8080
-
-# Set environment variables
+# Environment variables
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Development
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+ENV TZ=UTC
 
-# Set the entry point
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/api/ping || exit 1
+
 ENTRYPOINT ["dotnet", "API.dll"]
