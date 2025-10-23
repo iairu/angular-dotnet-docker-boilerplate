@@ -1,0 +1,212 @@
+/* Global styles for Angular + .NET + Docker Boilerplate */
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --gray-100: #f5f5f5;
+  --gray-800: #1f2937;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-mono: 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono',
+    'Courier New', monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --gray-100: #1f1f1f;
+    --gray-800: #e5e5e5;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+/* Utility classes similar to Tailwind */
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+.grid {
+  display: grid;
+}
+
+.grid-rows-auto {
+  grid-template-rows: 20px 1fr 20px;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-items-center {
+  justify-items: center;
+}
+
+.min-h-screen {
+  min-height: 100vh;
+}
+
+.p-8 {
+  padding: 2rem;
+}
+
+.pb-20 {
+  padding-bottom: 5rem;
+}
+
+.gap-16 {
+  gap: 4rem;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.gap-8 {
+  gap: 2rem;
+}
+
+.row-start-2 {
+  grid-row-start: 2;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.bg-gray-100 {
+  background-color: var(--gray-100);
+}
+
+.p-4 {
+  padding: 1rem;
+}
+
+.rounded-md {
+  border-radius: 0.375rem;
+}
+
+.text-gray-800 {
+  color: var(--gray-800);
+}
+
+/* Responsive design */
+@media (min-width: 640px) {
+  .sm\:p-20 {
+    padding: 5rem;
+  }
+  
+  .sm\:items-start {
+    align-items: flex-start;
+  }
+}
+
+/* Loading spinner */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--foreground);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error message styling */
+.error-message {
+  color: #ef4444;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  margin: 1rem 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .error-message {
+    color: #fca5a5;
+    background-color: #1f1f1f;
+    border-color: #374151;
+  }
+}
+
+/* Success message styling */
+.success-message {
+  color: #059669;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  margin: 1rem 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .success-message {
+    color: #6ee7b7;
+    background-color: #1f1f1f;
+    border-color: #374151;
+  }
+}
+
+/* Additional utility classes */
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.bg-blue-500 {
+  background-color: #3b82f6;
+}
+
+.text-white {
+  color: white;
+}
+
+.rounded {
+  border-radius: 0.25rem;
+}
+
+.transition-colors {
+  transition-property: color, background-color, border-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.hover\:bg-blue-600:hover {
+  background-color: #2563eb;
+}
