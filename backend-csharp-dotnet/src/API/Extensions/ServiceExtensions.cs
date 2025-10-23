@@ -15,7 +15,7 @@ public static class ServiceExtensions
         services.AddDbContext<AppDbContext>(options =>
         {
             var connectionString = config.GetConnectionString("DefaultConnection");
-            options.UseNpgsql(connectionString);
+            options.UseNpgsql(connectionString, b => b.MigrationsAssembly("Infrastructure"));
         });
 
         // Repository pattern

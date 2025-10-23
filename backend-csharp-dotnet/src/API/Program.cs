@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Core.Interfaces;
 using Infrastructure.Services;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -247,8 +248,20 @@ async Task VerifyAndApplyMigrations(AppDbContext context, ILogger<Program> logge
                 logger.LogWarning(ex, "Could not drop migration history table (may not exist)");
             }
             
-            // Reapply all migrations
-            await context.Database.MigrateAsync();
+            // Drop all tables and reapply migrations
+            await context.Database.ExecuteSqlRawAsync("DROP SCHEMA public CASCADE");
+            await context.Database.ExecuteSqlRawAsync("CREATE SCHEMA public");
+            await context.Database.ExecuteSqlRawAsync("GRANT ALL ON SCHEMA public TO boilerplate_user");
+            await context.Database.ExecuteSqlRawAsync("GRANT ALL ON SCHEMA public TO public");
+            logger.LogInformation("🗑️ Dropped and recreated schema");
+            
+            // Close and reopen connection to refresh schema
+            await context.Database.CloseConnectionAsync();
+            await context.Database.OpenConnectionAsync();
+            
+            // Get the migrator from the internal service provider and apply the initial migration directly
+            var migrator = context.GetInfrastructure().GetRequiredService<Microsoft.EntityFrameworkCore.Migrations.IMigrator>();
+            await migrator.MigrateAsync("20241231000000_InitialCreate");
             logger.LogInformation("✅ All migrations reapplied successfully");
             
             // Verify again
