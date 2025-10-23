@@ -1,4 +1,4 @@
-# Angular + .NET + Docker Boilerplate
+# Angular + C# .NET + Docker + Postgres + Nginx Boilerplate
 
 A tested working boilerplate template for modern full-stack web applications with Angular frontend, C# .NET backend, Docker containerization, and Nginx reverse proxy for singular frontend + backend port/domain access.
 
